@@ -88,10 +88,11 @@ actualizado.addTo(map);
 fetch('ultima_actualizacion.json?t=' + Date.now())
   .then(r => { if (!r.ok) throw new Error('sin fecha'); return r.json(); })
   .then(data => {
-    const fecha = new Date(data.actualizado);
+    const valor = data && data.actualizado;
+    const fecha = valor ? new Date(valor) : null;
     document.getElementById('fecha-actualizacion').textContent =
-      isNaN(fecha.getTime()) ? 'No disponible' :
-      new Intl.DateTimeFormat('es-AR', { dateStyle:'short', timeStyle:'short', timeZone:'America/Argentina/Buenos_Aires' }).format(fecha) + ' hs';
+      !fecha || isNaN(fecha.getTime()) ? 'Pendiente de primera sincronización' :
+      new Intl.DateTimeFormat('es-AR', { dateStyle:'short', timeStyle:'short', timeZone:'America/Argentina/Buenos_Aires', hourCycle:'h23' }).format(fecha) + ' hs';
   })
   .catch(() => { document.getElementById('fecha-actualizacion').textContent = 'Pendiente de primera sincronización'; });
 });
