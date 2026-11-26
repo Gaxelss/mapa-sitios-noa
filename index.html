@@ -20,7 +20,18 @@ const SITIOS = [{"c":"JU00008","n":"Tilcara","ci":"TILCARA","p":"Jujuy","lat":-2
 const calles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {attribution:'Tiles &copy; Esri', maxZoom:19});
 const oscuro = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {attribution:'Tiles &copy; Esri', maxZoom:16});
 const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap', maxZoom:19});
-const map = L.map('map', {layers:[calles]});
+fetch('datos_mapa.json').then(r => r.ok ? r.json() : []).catch(() => []).then(datos => {
+  const actual = new Map(datos.map(d => [String(d.c || '').trim().toUpperCase(), d]));
+  SITIOS.forEach(s => {
+    const d = actual.get(String(s.c || '').trim().toUpperCase());
+    if (d) {
+      s.tareas = d.tareas || [];
+      s.estadoActual = (d.estados || []).join(', ');
+      s.fechasPlan = (d.fechas || []).join(', ');
+      if (d.n) s.n = d.n;
+    }
+  });
+  const map = L.map('map', {layers:[calles]});
 L.control.layers({'Mapa de calles':calles,'Mapa oscuro':oscuro,'OpenStreetMap':osm}).addTo(map);
 const COL={"Verde": "#2E7D32", "Amarillo": "#F9A825", "Azul": "#1565C0", "Gris": "#757575", "Violeta": "#7B1FA2", "Otro": "#BDBDBD"};
 const grupo = L.layerGroup().addTo(map);
@@ -33,6 +44,12 @@ SITIOS.forEach(s => {
   titulo.className = 'popup-titulo';
   titulo.textContent = s.n;
   popup.appendChild(titulo);
+  if (s.estadoActual || s.fechasPlan) {
+    const detalle = document.createElement('div');
+    detalle.className = 'popup-subtitulo';
+    detalle.textContent = [s.estadoActual ? 'Estado: ' + s.estadoActual : '', s.fechasPlan ? 'Fecha de plan: ' + s.fechasPlan : ''].filter(Boolean).join(' · ');
+    popup.appendChild(detalle);
+  }
 
   const subtitulo = document.createElement('div');
   subtitulo.className = 'popup-subtitulo';
@@ -60,4 +77,5 @@ map.fitBounds(bounds, {padding:[30,30]});
 const info = L.control({position:'bottomleft'});
 info.onAdd = function(){ const d=L.DomUtil.create('div','info'); d.innerHTML='<b>Sitios de la lista</b><br><span style="color:#2E7D32">●</span> Aprobado <span style="color:#F9A825">●</span> Enviado <span style="color:#1565C0">●</span> En proceso <span style="color:#757575">●</span> Abierto <span style="color:#7B1FA2">●</span> Aprob.+Enviado<br>'+SITIOS.length+' sitios cargados'; return d; };
 info.addTo(map);
+});
 </script></body></html>
