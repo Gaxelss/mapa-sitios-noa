@@ -66,4 +66,9 @@ for row in ws.iter_rows(min_row=2, values_only=True):
 
 with open("datos_mapa.json", "w", encoding="utf-8") as f:
     json.dump(list(groups.values()), f, ensure_ascii=False, separators=(",", ":"))
+
+# Registrar la fecha y hora de esta sincronización exitosa en UTC.
+with open("ultima_actualizacion.json", "w", encoding="utf-8") as f:
+    json.dump({"actualizado": datetime.utcnow().isoformat(timespec="seconds") + "Z"}, f)
+
 print(f"Actualizados {len(groups)} sitios desde MapaPublico")
