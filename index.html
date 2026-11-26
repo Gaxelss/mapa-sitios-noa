@@ -2,6 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
+<meta name="version" content="2026-11-26-fix-fecha-2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -81,7 +82,7 @@ info.addTo(map);
 const actualizado = L.control({position:'bottomright'});
 actualizado.onAdd = function() {
   const d = L.DomUtil.create('div','info');
-  d.innerHTML = '<b>Última actualización</b><br><span id="fecha-actualizacion">Consultando...</span>';
+  d.innerHTML = '<b>Última actualización</b><br><span id="fecha-actualizacion">Pendiente de primera sincronización</span>';
   return d;
 };
 actualizado.addTo(map);
