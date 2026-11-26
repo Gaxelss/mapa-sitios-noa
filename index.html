@@ -77,5 +77,22 @@ map.fitBounds(bounds, {padding:[30,30]});
 const info = L.control({position:'bottomleft'});
 info.onAdd = function(){ const d=L.DomUtil.create('div','info'); d.innerHTML='<b>Sitios de la lista</b><br><span style="color:#2E7D32">●</span> Aprobado <span style="color:#F9A825">●</span> Enviado <span style="color:#1565C0">●</span> En proceso <span style="color:#757575">●</span> Abierto <span style="color:#7B1FA2">●</span> Aprob.+Enviado<br>'+SITIOS.length+' sitios cargados'; return d; };
 info.addTo(map);
+
+const actualizado = L.control({position:'bottomright'});
+actualizado.onAdd = function() {
+  const d = L.DomUtil.create('div','info');
+  d.innerHTML = '<b>Última actualización</b><br><span id="fecha-actualizacion">Consultando...</span>';
+  return d;
+};
+actualizado.addTo(map);
+fetch('ultima_actualizacion.json?t=' + Date.now())
+  .then(r => { if (!r.ok) throw new Error('sin fecha'); return r.json(); })
+  .then(data => {
+    const fecha = new Date(data.actualizado);
+    document.getElementById('fecha-actualizacion').textContent =
+      isNaN(fecha.getTime()) ? 'No disponible' :
+      new Intl.DateTimeFormat('es-AR', { dateStyle:'short', timeStyle:'short', timeZone:'America/Argentina/Buenos_Aires' }).format(fecha) + ' hs';
+  })
+  .catch(() => { document.getElementById('fecha-actualizacion').textContent = 'Pendiente de primera sincronización'; });
 });
 </script></body></html>
