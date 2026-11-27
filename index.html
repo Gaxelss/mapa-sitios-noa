@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-zonas-revisores-1">
+<meta name="version" content="2026-11-27-cuadrillas-pines-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -125,7 +125,7 @@ SITIOS.forEach(s => {
   popup.className = 'popup-sitio';
   const titulo = document.createElement('div');
   titulo.className = 'popup-titulo';
-  titulo.textContent = s.n;
+  titulo.textContent = s.c + ' · ' + s.n;
   popup.appendChild(titulo);
   if (s.estadoActual || s.fechasPlan) {
     const detalle = document.createElement('div');
@@ -193,42 +193,51 @@ document.getElementById('btn-limpiar').onclick=()=>{document.getElementById('bus
 document.getElementById('btn-recorrido').onclick=()=>{
  const seleccionados=sitiosFiltrados().filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon));
  const zonaFiltro=document.getElementById('filtro-zona').value;
- const cupos={'Metán':2,'Salta':4,'Jujuy':4,'Orán':4};
+ const configuracion={
+   'Metán':{total:2,equipos:1},
+   'Salta':{total:4,equipos:2},
+   'Jujuy':{total:4,equipos:2},
+   'Orán':{total:4,equipos:2}
+ };
  const zonas=zonaFiltro?[zonaFiltro]:['Metán','Salta','Jujuy','Orán'];
  const salida=document.getElementById('resultado-recorridos');
  salida.replaceChildren();
  const titulo=document.createElement('b');titulo.textContent='Recorridos sugeridos por cuadrilla';salida.appendChild(titulo);
  let total=0;
  zonas.forEach(zona=>{
-   const max=cupos[zona];if(!max)return;
-   const disponibles=seleccionados.filter(s=>s.p===zona);
-   const restantes=disponibles.slice();
+   const cfg=configuracion[zona];if(!cfg)return;
+   const restantes=seleccionados.filter(s=>s.p===zona).slice();
    const grupos=[];
-   while(restantes.length>=2 && grupos.reduce((n,g)=>n+g.length,0)<max){
+   // Cada cuadrilla recibe exactamente dos sitios cercanos; no se mezclan zonas ni cuadrillas.
+   while(restantes.length>=2 && grupos.length<cfg.equipos){
      let mejorI=0,mejorJ=1,distancia=Infinity;
      for(let i=0;i<restantes.length;i++)for(let j=i+1;j<restantes.length;j++){
        const d=map.distance([restantes[i].lat,restantes[i].lon],[restantes[j].lat,restantes[j].lon]);
        if(d<distancia){distancia=d;mejorI=i;mejorJ=j;}
      }
-     const par=[restantes[mejorI],restantes[mejorJ]];
-     grupos.push(par);
+     grupos.push([restantes[mejorI],restantes[mejorJ]]);
      restantes.splice(mejorJ,1);restantes.splice(mejorI,1);
    }
    if(!grupos.length)return;
-   const encabezado=document.createElement('p');encabezado.style.margin='9px 0 4px';encabezado.textContent=zona+' · '+(zona==='Metán'?'1 grupo de 2 sitios':'hasta 2 cuadrillas de 2 sitios');salida.appendChild(encabezado);
+   const encabezado=document.createElement('p');
+   encabezado.style.margin='9px 0 4px';
+   encabezado.textContent=zona+' · '+cfg.total+' sitios en '+cfg.equipos+' '+(cfg.equipos===1?'cuadrilla':'cuadrillas')+' (2 sitios por cuadrilla)';
+   salida.appendChild(encabezado);
    grupos.forEach((par,i)=>{
      const url='https://www.google.com/maps/dir/?api=1&origin='+par[0].lat+','+par[0].lon+'&destination='+par[1].lat+','+par[1].lon+'&travelmode=driving';
      const enlace=document.createElement('a');enlace.href=url;enlace.target='_blank';enlace.rel='noopener';
-     enlace.textContent=(zona==='Metán'?'Recorrido':('Cuadrilla '+(i+1)))+': '+par.map(s=>s.c+' · '+s.n).join(' → ');
+     enlace.textContent='Cuadrilla '+(i+1)+': '+par.map(s=>s.c+' · '+s.n).join(' → ');
      enlace.style.cssText='display:block;padding:7px;margin:4px 0;background:#eef3f8;border-radius:6px;color:#145da0;font-weight:600;text-decoration:none;font-size:12px';
      salida.appendChild(enlace);total+=par.length;
    });
-   if(grupos.reduce((n,g)=>n+g.length,0)<max){
-     const aviso=document.createElement('small');aviso.textContent='Faltan sitios con coordenadas para completar todos los grupos de '+zona+'.';salida.appendChild(aviso);
+   if(grupos.length<cfg.equipos){
+     const aviso=document.createElement('small');
+     aviso.textContent='Hay '+grupos.length+' cuadrilla(s) completa(s) en '+zona+'. Faltan sitios con coordenadas para completar las '+cfg.equipos+'.';
+     salida.appendChild(aviso);
    }
  });
  if(!total){const aviso=document.createElement('p');aviso.textContent='No hay suficientes sitios con coordenadas en las zonas seleccionadas. Seleccioná una zona o revisá los filtros.';salida.appendChild(aviso);}
-};
+}
 actualizarPanel();
 
 // Panel plegable para liberar espacio del mapa en celulares
