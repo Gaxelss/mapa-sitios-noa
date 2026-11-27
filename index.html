@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-herramientas-tecnicos-5">
+<meta name="version" content="2026-11-27-movil-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -28,10 +28,58 @@ html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
 .popup-acciones a{display:block;text-align:center;padding:8px 5px;border-radius:6px;background:#145da0;color:white;text-decoration:none;font-weight:700}
 .popup-acciones a.whatsapp{background:#16834b}
 @media(max-width:600px){#panel-tecnicos{top:8px;left:8px;width:calc(100vw - 40px);max-height:43vh;padding:9px}#panel-tecnicos h3{font-size:14px}#panel-tecnicos input,#panel-tecnicos select,#panel-tecnicos button{padding:8px;font-size:13px}.info{font-size:11px;padding:6px 8px}.leaflet-popup-content{margin:10px}}
+
+/* Experiencia móvil */
+.panel-cabecera{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panel-cabecera h3{margin:0!important}
+#toggle-panel{width:auto!important;white-space:nowrap;padding:7px 9px!important;margin:0!important;font-size:12px!important}
+#panel-tecnicos{overscroll-behavior:contain}
+#lista-resultados button{min-height:38px}
+.popup-sitio{overflow-wrap:anywhere}
+@media(max-width:600px){
+ html,body,#map{height:100%;height:100dvh;width:100%;overflow:hidden}
+ #panel-tecnicos{top:auto;bottom:calc(12px + env(safe-area-inset-bottom));left:8px;right:8px;width:auto;max-height:min(52dvh,470px);padding:11px;border-radius:15px;box-shadow:0 3px 18px #0004;transition:max-height .2s ease,padding .2s ease}
+ #panel-tecnicos h3{font-size:15px;line-height:1.2}
+ #panel-tecnicos input{font-size:16px;padding:12px;margin:8px 0 6px;border-radius:9px}
+ #panel-tecnicos select{font-size:16px;padding:11px 8px;margin:3px 0;border-radius:9px;min-width:0}
+ #panel-tecnicos select#filtro-zona,#panel-tecnicos select#filtro-estado,#panel-tecnicos select#orden-sitios{width:100%}
+ #panel-tecnicos .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0}
+ #panel-tecnicos .stat{padding:7px 3px;font-size:11px}
+ #panel-tecnicos .stat b{font-size:17px}
+ #lista-resultados{max-height:105px;margin-top:5px}
+ #lista-resultados button{font-size:13px;padding:9px;text-align:left;line-height:1.25}
+ #panel-tecnicos button{min-height:42px;border-radius:9px;font-size:14px;padding:10px}
+ #panel-tecnicos #btn-recorrido{margin-top:7px}
+ #panel-tecnicos #btn-limpiar{min-height:36px}
+ #panel-tecnicos.panel-plegado{max-height:54px;padding:8px 10px;overflow:hidden}
+ #panel-tecnicos.panel-plegado #buscar-sitio,
+ #panel-tecnicos.panel-plegado select,
+ #panel-tecnicos.panel-plegado .stats,
+ #panel-tecnicos.panel-plegado #lista-resultados,
+ #panel-tecnicos.panel-plegado #btn-recorrido,
+ #panel-tecnicos.panel-plegado #btn-limpiar{display:none}
+ .leaflet-bottom{bottom:calc(62px + env(safe-area-inset-bottom))}
+ .leaflet-left{left:5px}
+ .leaflet-right{right:5px}
+ .info{font-size:10px;line-height:1.3;padding:6px 7px;max-width:46vw}
+ .info b{font-size:11px}
+ .leaflet-control-attribution{font-size:9px}
+ .leaflet-popup-content-wrapper{border-radius:12px}
+ .leaflet-popup-content{margin:12px;max-width:calc(100vw - 90px)!important}
+ .popup-sitio{min-width:0;max-width:100%;font-size:14px;line-height:1.45}
+ .popup-titulo{font-size:17px}
+ .popup-acciones{grid-template-columns:1fr 1fr;gap:8px}
+ .popup-acciones a{padding:12px 6px;font-size:14px;border-radius:9px}
+ .leaflet-control-zoom a{width:38px!important;height:38px!important;line-height:38px!important;font-size:22px!important}
+}
+@media(max-width:380px){
+ #panel-tecnicos .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .info{max-width:43vw}
+}
 </style></head><body>
 <div id="map"></div>
 <div id="panel-tecnicos">
-<h3>Herramientas para técnicos</h3>
+<div class="panel-cabecera"><h3>Mapa de sitios NOA</h3><button id="toggle-panel" type="button" aria-expanded="true">Ocultar filtros ▲</button></div>
 <input id="buscar-sitio" type="search" placeholder="Buscar por código ST o nombre...">
 <select id="filtro-zona"><option value="">Todas las zonas</option><option>Salta</option><option>Jujuy</option></select>
 <select id="filtro-estado"><option value="">Todos los estados</option><option>Abierto</option><option>En proceso</option><option>Enviado</option><option>Aprobado</option></select>
@@ -149,6 +197,19 @@ document.getElementById('btn-recorrido').onclick=()=>{
  alert('Recorrido sugerido por cercanía: '+puntos.map(s=>s.c).join(' → ')+(ruta.length>10?'\nSe muestran los primeros 10 sitios. Aplicá un filtro para armar otro tramo.':''));
 };
 actualizarPanel();
+
+// Panel plegable para liberar espacio del mapa en celulares
+const panelTecnicos=document.getElementById('panel-tecnicos');
+const togglePanel=document.getElementById('toggle-panel');
+if(togglePanel){
+ togglePanel.addEventListener('click',()=>{
+  const plegado=panelTecnicos.classList.toggle('panel-plegado');
+  togglePanel.textContent=plegado?'Mostrar filtros ▼':'Ocultar filtros ▲';
+  togglePanel.setAttribute('aria-expanded',String(!plegado));
+  setTimeout(()=>map.invalidateSize(),220);
+ });
+}
+
 map.fitBounds(bounds, {padding:[30,30]});
 const info = L.control({position:'bottomleft'});
 info.onAdd = function(){ const d=L.DomUtil.create('div','info'); d.innerHTML='<b>Sitios de la lista</b><br><span style="color:#2E7D32">●</span> Aprobado <span style="color:#F9A825">●</span> Enviado <span style="color:#1565C0">●</span> En proceso <span style="color:#757575">●</span> Abierto <span style="color:#7B1FA2">●</span> Aprob.+Enviado<br>'+SITIOS.length+' sitios cargados'; return d; };
