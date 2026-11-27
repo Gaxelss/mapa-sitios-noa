@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-movil-1">
+<meta name="version" content="2026-11-27-zonas-revisores-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -81,7 +81,7 @@ html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
 <div id="panel-tecnicos">
 <div class="panel-cabecera"><h3>Mapa de sitios NOA</h3><button id="toggle-panel" type="button" aria-expanded="true">Ocultar filtros ▲</button></div>
 <input id="buscar-sitio" type="search" placeholder="Buscar por código ST o nombre...">
-<select id="filtro-zona"><option value="">Todas las zonas</option><option>Salta</option><option>Jujuy</option></select>
+<select id="filtro-zona"><option value="">Todas las zonas</option><option>Salta</option><option>Jujuy</option><option>Orán</option><option>Metán</option></select>
 <select id="filtro-estado"><option value="">Todos los estados</option><option>Abierto</option><option>En proceso</option><option>Enviado</option><option>Aprobado</option></select>
 <select id="orden-sitios"><option value="original">Orden original</option><option value="fecha">Fecha de plan (más próxima)</option><option value="nombre">Nombre del sitio</option><option value="codigo">Código ST</option></select>
 <div class="stats" id="contadores-sitios"></div>
@@ -108,14 +108,18 @@ fetch('datos_mapa.json?t=' + Date.now()).then(r => r.ok ? r.json() : []).catch((
       s.estadoActual = (d.estados || []).join(', ');
       s.fechasPlan = (d.fechas || []).join(', ');
       if (d.n) s.n = d.n;
+      if (d.zona) s.p = d.zona;
+      if (d.revisadoPor) s.revisadoPor = d.revisadoPor;
     }
   });
+  datos.forEach(d => { if (d.zona && !SITIOS.some(s => s.c === d.c)) SITIOS.push({c:d.c,n:d.n,p:d.zona,lat:null,lon:null,cat:'Gris',tareas:d.tareas||[],estadoActual:(d.estados||[]).join(', '),fechasPlan:(d.fechas||[]).join(', '),revisadoPor:d.revisadoPor}); });
   const map = L.map('map', {layers:[calles]});
 L.control.layers({'Mapa de calles':calles,'Mapa oscuro':oscuro,'OpenStreetMap':osm}).addTo(map);
 const COL={"Verde": "#2E7D32", "Amarillo": "#F9A825", "Azul": "#1565C0", "Gris": "#757575", "Violeta": "#7B1FA2", "Otro": "#BDBDBD"};
 const grupo = L.layerGroup().addTo(map);
 const bounds = [];
 SITIOS.forEach(s => {
+  if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) return;
   const m = L.circleMarker([s.lat, s.lon], {radius:8, color:'#fff', weight:2, fillColor:COL[s.cat]||'#999', fillOpacity:1});
   const popup = document.createElement('div');
   popup.className = 'popup-sitio';
@@ -181,13 +185,13 @@ function actualizarPanel(){
  const cuenta=(f)=>SITIOS.filter(s=>coincideEstado(s,f)).length;
  document.getElementById('contadores-sitios').innerHTML='<div class="stat"><b>'+SITIOS.length+'</b>Total</div><div class="stat"><b>'+lista.length+'</b>Coinciden</div><div class="stat"><b>'+SITIOS.filter(s=>coincideEstado(s,'abierto')||coincideEstado(s,'enviado')).length+'</b>Pendientes</div><div class="stat"><b>'+cuenta('en proceso')+'</b>En proceso</div><div class="stat"><b>'+cuenta('aprobado')+'</b>Aprobados</div>';
  const cont=document.getElementById('lista-resultados');cont.replaceChildren();
- lista.slice(0,40).forEach(s=>{const b=document.createElement('button');b.textContent=s.c+' · '+s.n+(s.fechasPlan?' · '+s.fechasPlan:'');b.onclick=()=>{const m=marcadores.get(s.c);if(m){map.setView([s.lat,s.lon],14);m.openPopup();}};cont.appendChild(b);});
+ lista.slice(0,40).forEach(s=>{const b=document.createElement('button');b.textContent=s.c+' · '+s.n+(s.fechasPlan?' · '+s.fechasPlan:'')+(!Number.isFinite(s.lat)?' · Sin coordenadas':'');b.onclick=()=>{const m=marcadores.get(s.c);if(m){map.setView([s.lat,s.lon],14);m.openPopup();}else{alert('Este sitio todavía no tiene coordenadas cargadas en el mapa.');}};cont.appendChild(b);});
  if(lista.length>40){const p=document.createElement('div');p.textContent='Mostrando los primeros 40 resultados.';cont.appendChild(p);}
 }
 ['buscar-sitio','filtro-zona','filtro-estado','orden-sitios'].forEach(id=>document.getElementById(id).addEventListener(id==='buscar-sitio'?'input':'change',actualizarPanel));
 document.getElementById('btn-limpiar').onclick=()=>{document.getElementById('buscar-sitio').value='';document.getElementById('filtro-zona').value='';document.getElementById('filtro-estado').value='';document.getElementById('orden-sitios').value='original';actualizarPanel();};
 document.getElementById('btn-recorrido').onclick=()=>{
- const pendientes=sitiosFiltrados().slice();
+ const pendientes=sitiosFiltrados().filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon)).slice();
  if(pendientes.length<2){alert('Aplicá filtros para seleccionar al menos dos sitios.');return;}
  const restantes=pendientes.slice(1), ruta=[pendientes[0]];
  while(restantes.length){const actual=ruta[ruta.length-1];let mejor=0,dist=Infinity;restantes.forEach((s,i)=>{const d=map.distance([actual.lat,actual.lon],[s.lat,s.lon]);if(d<dist){dist=d;mejor=i;}});ruta.push(restantes.splice(mejor,1)[0]);}
