@@ -86,7 +86,7 @@ html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
 <select id="orden-sitios"><option value="original">Orden original</option><option value="fecha">Fecha de plan (más próxima)</option><option value="nombre">Nombre del sitio</option><option value="codigo">Código ST</option></select>
 <div class="stats" id="contadores-sitios"></div>
 <div id="lista-resultados"></div>
-<button id="btn-recorrido">Agrupar sitios cercanos y planificar recorrido</button>
+<button id="btn-recorrido">Agrupar sitios cercanos y planificar recorrido</button><div id="resultado-recorridos" style="margin-top:8px;font-size:12px;line-height:1.35"></div>
 <button id="btn-limpiar" class="secundario">Limpiar filtros</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -191,14 +191,43 @@ function actualizarPanel(){
 ['buscar-sitio','filtro-zona','filtro-estado','orden-sitios'].forEach(id=>document.getElementById(id).addEventListener(id==='buscar-sitio'?'input':'change',actualizarPanel));
 document.getElementById('btn-limpiar').onclick=()=>{document.getElementById('buscar-sitio').value='';document.getElementById('filtro-zona').value='';document.getElementById('filtro-estado').value='';document.getElementById('orden-sitios').value='original';actualizarPanel();};
 document.getElementById('btn-recorrido').onclick=()=>{
- const pendientes=sitiosFiltrados().filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon)).slice();
- if(pendientes.length<2){alert('Aplicá filtros para seleccionar al menos dos sitios.');return;}
- const restantes=pendientes.slice(1), ruta=[pendientes[0]];
- while(restantes.length){const actual=ruta[ruta.length-1];let mejor=0,dist=Infinity;restantes.forEach((s,i)=>{const d=map.distance([actual.lat,actual.lon],[s.lat,s.lon]);if(d<dist){dist=d;mejor=i;}});ruta.push(restantes.splice(mejor,1)[0]);}
- const puntos=ruta.slice(0,10), origen=puntos[0], destino=puntos[puntos.length-1], paradas=puntos.slice(1,-1);
- const url='https://www.google.com/maps/dir/?api=1&origin='+origen.lat+','+origen.lon+'&destination='+destino.lat+','+destino.lon+'&waypoints='+paradas.map(s=>s.lat+','+s.lon).join('|')+'&travelmode=driving';
- window.open(url,'_blank','noopener');
- alert('Recorrido sugerido por cercanía: '+puntos.map(s=>s.c).join(' → ')+(ruta.length>10?'\nSe muestran los primeros 10 sitios. Aplicá un filtro para armar otro tramo.':''));
+ const seleccionados=sitiosFiltrados().filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon));
+ const zonaFiltro=document.getElementById('filtro-zona').value;
+ const cupos={'Metán':2,'Salta':4,'Jujuy':4,'Orán':4};
+ const zonas=zonaFiltro?[zonaFiltro]:['Metán','Salta','Jujuy','Orán'];
+ const salida=document.getElementById('resultado-recorridos');
+ salida.replaceChildren();
+ const titulo=document.createElement('b');titulo.textContent='Recorridos sugeridos por cuadrilla';salida.appendChild(titulo);
+ let total=0;
+ zonas.forEach(zona=>{
+   const max=cupos[zona];if(!max)return;
+   const disponibles=seleccionados.filter(s=>s.p===zona);
+   const restantes=disponibles.slice();
+   const grupos=[];
+   while(restantes.length>=2 && grupos.reduce((n,g)=>n+g.length,0)<max){
+     let mejorI=0,mejorJ=1,distancia=Infinity;
+     for(let i=0;i<restantes.length;i++)for(let j=i+1;j<restantes.length;j++){
+       const d=map.distance([restantes[i].lat,restantes[i].lon],[restantes[j].lat,restantes[j].lon]);
+       if(d<distancia){distancia=d;mejorI=i;mejorJ=j;}
+     }
+     const par=[restantes[mejorI],restantes[mejorJ]];
+     grupos.push(par);
+     restantes.splice(mejorJ,1);restantes.splice(mejorI,1);
+   }
+   if(!grupos.length)return;
+   const encabezado=document.createElement('p');encabezado.style.margin='9px 0 4px';encabezado.textContent=zona+' · '+(zona==='Metán'?'1 grupo de 2 sitios':'hasta 2 cuadrillas de 2 sitios');salida.appendChild(encabezado);
+   grupos.forEach((par,i)=>{
+     const url='https://www.google.com/maps/dir/?api=1&origin='+par[0].lat+','+par[0].lon+'&destination='+par[1].lat+','+par[1].lon+'&travelmode=driving';
+     const enlace=document.createElement('a');enlace.href=url;enlace.target='_blank';enlace.rel='noopener';
+     enlace.textContent=(zona==='Metán'?'Recorrido':('Cuadrilla '+(i+1)))+': '+par.map(s=>s.c+' · '+s.n).join(' → ');
+     enlace.style.cssText='display:block;padding:7px;margin:4px 0;background:#eef3f8;border-radius:6px;color:#145da0;font-weight:600;text-decoration:none;font-size:12px';
+     salida.appendChild(enlace);total+=par.length;
+   });
+   if(grupos.reduce((n,g)=>n+g.length,0)<max){
+     const aviso=document.createElement('small');aviso.textContent='Faltan sitios con coordenadas para completar todos los grupos de '+zona+'.';salida.appendChild(aviso);
+   }
+ });
+ if(!total){const aviso=document.createElement('p');aviso.textContent='No hay suficientes sitios con coordenadas en las zonas seleccionadas. Seleccioná una zona o revisá los filtros.';salida.appendChild(aviso);}
 };
 actualizarPanel();
 
