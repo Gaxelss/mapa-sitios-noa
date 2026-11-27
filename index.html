@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-26-fix-fecha-2">
+<meta name="version" content="2026-11-27-nombres-tareas-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -26,7 +26,11 @@ fetch('datos_mapa.json').then(r => r.ok ? r.json() : []).catch(() => []).then(da
   SITIOS.forEach(s => {
     const d = actual.get(String(s.c || '').trim().toUpperCase());
     if (d) {
-      s.tareas = d.tareas || [];
+      // Si Excel trae identificadores TA, conservar los nombres descriptivos ya asociados al sitio.
+      // Si trae nombres de tareas, usar esos nombres.
+      const tareasExcel = Array.isArray(d.tareas) ? d.tareas : [];
+      const sonCodigosTA = tareasExcel.length > 0 && tareasExcel.every(t => /^TA-\\d{2}-\\d+$/i.test(String(t).trim()));
+      if (tareasExcel.length && !sonCodigosTA) s.tareas = tareasExcel;
       s.estadoActual = (d.estados || []).join(', ');
       s.fechasPlan = (d.fechas || []).join(', ');
       if (d.n) s.n = d.n;
