@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-pines-formales-1">
+<meta name="version" content="2026-11-27-filtros-notebook-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -38,6 +38,18 @@ html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
 .panel-cabecera h3{margin:0!important}
 #toggle-panel{width:auto!important;white-space:nowrap;padding:7px 9px!important;margin:0!important;font-size:12px!important}
 #panel-tecnicos{overscroll-behavior:contain}
+/* El plegado funciona también en notebook y escritorio */
+#panel-tecnicos.panel-plegado{height:auto;max-height:52px;min-height:0;overflow:hidden;padding:9px 10px}
+#panel-tecnicos.panel-plegado #buscar-sitio,
+#panel-tecnicos.panel-plegado select,
+#panel-tecnicos.panel-plegado .stats,
+#panel-tecnicos.panel-plegado #lista-resultados,
+#panel-tecnicos.panel-plegado #btn-recorrido,
+#panel-tecnicos.panel-plegado #btn-limpiar,
+#panel-tecnicos.panel-plegado #resultado-recorridos{display:none!important}
+#panel-tecnicos.panel-plegado .panel-cabecera{margin:0}
+#panel-tecnicos.panel-plegado #toggle-panel{display:inline-block!important}
+
 #lista-resultados button{min-height:38px}
 .popup-sitio{overflow-wrap:anywhere}
 @media(max-width:600px){
