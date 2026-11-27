@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-herramientas-tecnicos-4">
+<meta name="version" content="2026-11-27-herramientas-tecnicos-5">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -131,7 +131,7 @@ function actualizarPanel(){
  grupo.clearLayers();
  lista.forEach(s=>{const m=marcadores.get(s.c);if(m)m.addTo(grupo);});
  const cuenta=(f)=>SITIOS.filter(s=>coincideEstado(s,f)).length;
- document.getElementById('contadores-sitios').innerHTML='<div class="stat"><b>'+SITIOS.length+'</b>Total</div><div class="stat"><b>'+lista.length+'</b>Coinciden</div><div class="stat"><b>'+cuenta('abierto')+'</b>Abiertos</div><div class="stat"><b>'+cuenta('en proceso')+'</b>En proceso</div>';
+ document.getElementById('contadores-sitios').innerHTML='<div class="stat"><b>'+SITIOS.length+'</b>Total</div><div class="stat"><b>'+lista.length+'</b>Coinciden</div><div class="stat"><b>'+SITIOS.filter(s=>coincideEstado(s,'abierto')||coincideEstado(s,'enviado')).length+'</b>Pendientes</div><div class="stat"><b>'+cuenta('en proceso')+'</b>En proceso</div><div class="stat"><b>'+cuenta('aprobado')+'</b>Aprobados</div>';
  const cont=document.getElementById('lista-resultados');cont.replaceChildren();
  lista.slice(0,40).forEach(s=>{const b=document.createElement('button');b.textContent=s.c+' · '+s.n+(s.fechasPlan?' · '+s.fechasPlan:'');b.onclick=()=>{const m=marcadores.get(s.c);if(m){map.setView([s.lat,s.lon],14);m.openPopup();}};cont.appendChild(b);});
  if(lista.length>40){const p=document.createElement('div');p.textContent='Mostrando los primeros 40 resultados.';cont.appendChild(p);}
@@ -143,10 +143,10 @@ document.getElementById('btn-recorrido').onclick=()=>{
  if(pendientes.length<2){alert('Aplicá filtros para seleccionar al menos dos sitios.');return;}
  const restantes=pendientes.slice(1), ruta=[pendientes[0]];
  while(restantes.length){const actual=ruta[ruta.length-1];let mejor=0,dist=Infinity;restantes.forEach((s,i)=>{const d=map.distance([actual.lat,actual.lon],[s.lat,s.lon]);if(d<dist){dist=d;mejor=i;}});ruta.push(restantes.splice(mejor,1)[0]);}
- const origen=ruta[0], destino=ruta[ruta.length-1], paradas=ruta.slice(1,-1).slice(0,8);
+ const puntos=ruta.slice(0,10), origen=puntos[0], destino=puntos[puntos.length-1], paradas=puntos.slice(1,-1);
  const url='https://www.google.com/maps/dir/?api=1&origin='+origen.lat+','+origen.lon+'&destination='+destino.lat+','+destino.lon+'&waypoints='+paradas.map(s=>s.lat+','+s.lon).join('|')+'&travelmode=driving';
  window.open(url,'_blank','noopener');
- alert('Recorrido sugerido por cercanía: '+ruta.map(s=>s.c).join(' → ')+(ruta.length>10?' (Google Maps mostrará hasta 10 puntos).':''));
+ alert('Recorrido sugerido por cercanía: '+puntos.map(s=>s.c).join(' → ')+(ruta.length>10?'\nSe muestran los primeros 10 sitios. Aplicá un filtro para armar otro tramo.':''));
 };
 actualizarPanel();
 map.fitBounds(bounds, {padding:[30,30]});
