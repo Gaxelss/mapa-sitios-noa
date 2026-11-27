@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-cuadrillas-pines-1">
+<meta name="version" content="2026-11-27-pines-formales-1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -29,6 +29,10 @@ html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
 .popup-acciones a.whatsapp{background:#16834b}
 @media(max-width:600px){#panel-tecnicos{top:8px;left:8px;width:calc(100vw - 40px);max-height:43vh;padding:9px}#panel-tecnicos h3{font-size:14px}#panel-tecnicos input,#panel-tecnicos select,#panel-tecnicos button{padding:8px;font-size:13px}.info{font-size:11px;padding:6px 8px}.leaflet-popup-content{margin:10px}}
 
+/* Pines cartográficos formales */
+.pin-sitio{width:32px;height:42px;display:flex;align-items:flex-start;justify-content:center;filter:drop-shadow(0 2px 3px rgba(15,23,42,.32));transition:transform .16s ease,filter .16s ease}
+.pin-sitio:hover{transform:translateY(-2px);filter:drop-shadow(0 4px 5px rgba(15,23,42,.38))}
+.pin-sitio svg{display:block;width:32px;height:42px;overflow:visible}
 /* Experiencia móvil */
 .panel-cabecera{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .panel-cabecera h3{margin:0!important}
@@ -120,7 +124,9 @@ const grupo = L.layerGroup().addTo(map);
 const bounds = [];
 SITIOS.forEach(s => {
   if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) return;
-  const m = L.circleMarker([s.lat, s.lon], {radius:8, color:'#fff', weight:2, fillColor:COL[s.cat]||'#999', fillOpacity:1});
+  const colorPin = COL[s.cat] || '#64748b';
+  const iconoPin = L.divIcon({className:'',iconSize:[32,42],iconAnchor:[16,40],popupAnchor:[0,-36],html:'<div class="pin-sitio"><svg viewBox="0 0 32 42" aria-hidden="true"><path d="M16 1.5C8.1 1.5 2 7.6 2 15.2c0 10.1 14 25.1 14 25.1s14-15 14-25.1C30 7.6 23.9 1.5 16 1.5Z" fill="'+colorPin+'" stroke="#fff" stroke-width="2"/><circle cx="16" cy="15" r="5.2" fill="#fff"/><circle cx="16" cy="15" r="2.2" fill="'+colorPin+'"/></svg></div>'});
+  const m = L.marker([s.lat, s.lon], {icon:iconoPin,keyboard:true,title:s.c+' · '+s.n,alt:s.c+' · '+s.n});
   const popup = document.createElement('div');
   popup.className = 'popup-sitio';
   const titulo = document.createElement('div');
