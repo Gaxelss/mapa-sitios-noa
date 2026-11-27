@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sitios NOA preventivos</title>
-<meta name="version" content="2026-11-27-herramientas-tecnicos-3">
+<meta name="version" content="2026-11-27-herramientas-tecnicos-4">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"/>
 <style>
 html,body,#map{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
@@ -119,7 +119,7 @@ const marcadores = new Map();
 grupo.eachLayer(m => { const ll=m.getLatLng(); const sitio=SITIOS.find(x=>x.lat===ll.lat && x.lon===ll.lng); if(sitio) marcadores.set(sitio.c,m); });
 function normalizar(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
 function estadoDe(s){return String(s.estadoActual || s.lab || '').toLowerCase();}
-function fechaDe(s){const v=String(s.fechasPlan||'').match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/);return v?new Date(+v[3],+v[2]-1,+v[1]).getTime():Infinity;}
+function fechaDe(s){const v=String(s.fechasPlan||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return v?new Date(+v[3],+v[2]-1,+v[1]).getTime():Infinity;}
 function coincideEstado(s,f){if(!f)return true;const e=estadoDe(s);return e.includes(f.toLowerCase());}
 function sitiosFiltrados(){
  const q=normalizar(document.getElementById('buscar-sitio').value), z=document.getElementById('filtro-zona').value, e=document.getElementById('filtro-estado').value;
